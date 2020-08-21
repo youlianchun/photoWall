@@ -1,0 +1,99 @@
+
+- (void)photoWallTest {
+    NSUInteger numbersOfX = 6;
+    NSUInteger numbersOfY = 6;
+    CGFloat x = 0.0;//x初始位置
+    CGFloat y = 100.0;//y初始位置
+    CGFloat side = 40.0;//边长
+    CGFloat angle = -45.0;//旋转角度
+    CGFloat offset = side/2.0;//交错偏移量
+    
+    CGPoint offsetX, offsetY;
+    {
+/*
+  -------- --------
+ |        |        |
+ | origin | nextX  |
+ |        |        |
+  -------- --------
+ |        |
+ | nextY  |
+ |        |
+  --------
+ */
+        CGPoint originCenter = CGPointMake(side, side);//原点
+
+        CGPoint nextXCenter = originCenter;
+        nextXCenter.x += side;
+        nextXCenter.y += offset;
+        nextXCenter = pointRotate(nextXCenter, originCenter, angle2radian(angle));
+       
+        CGPoint nextYCenter = originCenter;
+        nextYCenter.y += side;
+        nextYCenter = pointRotate(nextYCenter, originCenter, angle2radian(angle));
+        
+        CGFloat offsetXx = nextXCenter.x - originCenter.x;
+        CGFloat offsetXy = nextXCenter.y - originCenter.y;
+        offsetX = CGPointMake(offsetXx, offsetXy);
+       
+        CGFloat offsetYx = nextYCenter.x - originCenter.x;
+        CGFloat offsetYy = nextYCenter.y - originCenter.y;
+        offsetY = CGPointMake(offsetYx, offsetYy);
+    }
+    
+    CGRect frame = CGRectMake(0, 0, side, side);
+    for (NSUInteger xi = 0; xi < numbersOfX; xi ++) {
+        for (NSUInteger yi = 0; yi < numbersOfY; yi ++) {
+            
+            CGFloat cx = (xi * offsetX.x) + (yi * offsetY.x);
+            CGFloat cy = (xi * offsetX.y) + (yi * offsetY.y);
+            
+            NSUInteger numbersOfAdjust = 2;//90 / ABS(angle);            //每n列重置一下y偏移量（旋转时候是倾斜的平行四边形，尽量修正倾斜角度）
+            cx += (xi / numbersOfAdjust) * offsetY.x;
+            cy += (xi / numbersOfAdjust) * offsetY.y;
+            
+            CGFloat cxMax = ((numbersOfX - 1) * offsetX.x) + (1 * offsetY.x);
+            cxMax += ((numbersOfX - 1) / numbersOfAdjust) * offsetY.x;
+            
+//            CGFloat cxMay = (1 * offsetX.y) + ((numbersOfY - 1) * offsetY.y);
+//
+//            if (cx > cxMax) {
+//                cx -= cxMax;
+//            }
+            
+            cx += x;
+            cy += y;
+            
+            CGPoint center = CGPointMake(cx, cy);
+            
+            UIView *view = [UIView new];
+            view.frame = frame;
+            view.center = center;
+            view.backgroundColor = color();
+            view.transform = CGAffineTransformMakeRotation(angle2radian(angle));
+            [self.view insertSubview:view atIndex:0];
+        }
+    }
+}
+
+//角度转弧度
+CG_INLINE CGFloat
+angle2radian(CGFloat angle)
+{
+    return M_PI * angle / 180.0;
+}
+
+//点围绕锚点旋转一定弧度后的新点
+CG_INLINE CGPoint
+pointRotate(CGPoint from, CGPoint anchor, CGFloat radian)
+{
+    CGFloat sa = sin(radian);
+    CGFloat ca = cos(radian);
+    CGFloat x = anchor.x + ((from.x-anchor.x)*ca - (from.y-anchor.y)*sa);
+    CGFloat y = anchor.y + ((from.x-anchor.x)*sa + (from.y-anchor.y)*ca);
+    return CGPointMake(x, y);
+}
+
+static UIColor *color() {
+    return [UIColor colorWithRed:arc4random() % 255 / 255.0 green:arc4random() % 255 / 255.0 blue:arc4random() % 255 / 255.0 alpha:1];
+}
